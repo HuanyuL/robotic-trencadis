@@ -3,10 +3,17 @@ import numpy as np
 import os, re, copy
 from glob import glob
 
+# import session helper and resolve folders from the active session
+from helpers.session_manager import load_session
+
 # ─────────────── CONFIGURATION ───────────────
-pointcloud_dir = r"F:\\07. IAAC_Internship\\00. PROJECT 01_deco2_robotic_mosaic\\ICP\\ICP_1st Trial\\test05-1\\Initial point clouds"
-transform_dir  = r"F:\\07. IAAC_Internship\\00. PROJECT 01_deco2_robotic_mosaic\\ICP\\ICP_1st Trial\\test05-1\\Transformation matrix_3 capture"
-output_path    = r"F:\\07. IAAC_Internship\\00. PROJECT 01_deco2_robotic_mosaic\\ICP\\ICP_1st Trial\\test05-1\\Merged point clouds\\merged01.ply"
+# Resolve directories from the chosen (or last) session
+_session_name = input("Session name (blank = reuse last): ").strip() or None
+_paths = load_session(".", _session_name)
+
+pointcloud_dir = str(_paths.initial_point_clouds)           # sessions/<Session>/Initial point clouds
+transform_dir  = str(_paths.global_transforms_root)         # helpers/Transformation matrix_3 capture (shared)
+output_path    = os.path.join(str(_paths.merged_point_clouds), "merged01.ply")  # sessions/<Session>/Merged point clouds/merged01.ply
 
 reference_index = 1  # <-- anchor scan index
 
@@ -172,7 +179,7 @@ class PointCloudMerger:
         return merged
 
     def run(self, output_path):
-        if self.frame_mode == "ref_cam":
+        if self.frame_mode == "ref_c am":
             merged_cam, T_ref = self.merge_ref_cam_pipeline()
             # If you still want the final in BASE, uncomment the line below:
             # merged_cam.transform(np.linalg.inv(T_ref))

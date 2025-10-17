@@ -11,15 +11,18 @@ from mecheye.shared import *
 from mecheye.area_scan_3d_camera import *
 from mecheye.area_scan_3d_camera_utils import print_camera_info, show_error
 
+# import the session helpers (directory management only)
+from helpers.session_manager import load_session, init_session
+
 
 class CaptureTexturedPointCloud:
     def __init__(self):
         self.camera = Camera()
         self.frame_all_2d_3d = Frame2DAnd3D()
 
-        # === Configure output directory here ===
-        self.output_dir = r"F:\\07. IAAC_Internship\\00. PROJECT 01_deco2_robotic_mosaic\\ICP\\ICP_1st Trial\\test05-1\\Initial point clouds"  # Change this path as needed
-        os.makedirs(self.output_dir, exist_ok=True)
+        # === Directory now resolved per session (Initial point clouds) ===
+        # We set this later in main() after choosing/creating the session.
+        self.output_dir = None
 
     def discover_cameras(self):
         print("Discovering all available cameras...")
@@ -46,9 +49,20 @@ class CaptureTexturedPointCloud:
             print("Invalid input. Please enter a valid index.")
 
     def capture_textured_point_cloud(self):
-        """Capture a textured point cloud and save it to a timestamped file."""
-        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = os.path.join(self.output_dir, f"point_cloud_01.ply")
+        """Capture a textured point cloud and save it with an index-based filename."""
+        # Ask for index and build zero-padded filename
+        while True:
+            idx_str = input("\nEnter point cloud index [1..99] (default 1): ").strip()
+            if idx_str == "":
+                idx = 1
+                break
+            if idx_str.isdigit() and 1 <= int(idx_str) <= 99:
+                idx = int(idx_str)
+                break
+            print("Invalid input. Please enter a number between 1 and 99.")
+
+        filename = f"point_cloud_{idx:02d}.ply"
+        output_file = os.path.join(self.output_dir, filename)
 
         print("\nCapturing 2D + 3D frame...")
         status = self.camera.capture_2d_and_3d(self.frame_all_2d_3d)
@@ -66,6 +80,20 @@ class CaptureTexturedPointCloud:
         return True
 
     def main(self):
+        # >>> Added: pick or create a session, then set output_dir to its "Initial point clouds"
+        session_name = input("Session name (leave blank to reuse last or create 'Test 01'): ").strip()
+        try:
+            paths = load_session(".", session_name or None)
+        except FileNotFoundError:
+            # If no session exists, create one (named by user or default)
+            paths = init_session(".", session_name or "Test 01")
+            print(f"[init] created session: {paths.session_name}")
+
+        # Match your original intent: save into "Initial point clouds"
+        self.output_dir = str(paths.initial_point_clouds)
+        os.makedirs(self.output_dir, exist_ok=True)
+        print(f"[capture] Output directory set to: {self.output_dir}")
+
         # Discover available cameras
         camera_infos = self.discover_cameras()
         if not camera_infos:
