@@ -1,0 +1,7 @@
+# Core Python
+numpy==1.26.4
+scipy==1.15.3
+scikit-learn==1.7.2
+open3d==0.19.0
+opencv-python==4.10.0.84
+mecheyeapi==2.5.1
